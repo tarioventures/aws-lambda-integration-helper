@@ -1,0 +1,16 @@
+{
+  "name": "aws-integration-lambda-helper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.869.0",
+    "parse-link-header": "^1.0.1",
+    "request": "^2.88.2"
+  }
+}
