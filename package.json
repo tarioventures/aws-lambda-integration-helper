@@ -1,7 +1,6 @@
 {
-  "name": "aws-integration-lambda-helper",
+  "name": "@tarioventures/aws-integration-lambda-helper",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -12,5 +11,15 @@
     "aws-sdk": "^2.869.0",
     "parse-link-header": "^1.0.1",
     "request": "^2.88.2"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://tarioventures:Cc8669108@github.com/tarioventures/aws-lambda-integration-helper.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tarioventures/aws-lambda-integration-helper/issues"
+  },
+  "homepage": "https://github.com/tarioventures/aws-lambda-integration-helper#readme",
+  "description": ""
 }
