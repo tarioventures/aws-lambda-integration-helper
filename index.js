@@ -119,10 +119,14 @@ function shopifyRecursiveNextRequest(requestOptions, shopifyConfig, key, pageInf
         json: true
     };
     if (requestOptions.method == "GET") {
-        options.qs = requestOptions.body;
+        options["qs"] = {};
+        if(requestOptions.body["limit"]){
+            options.qs["limit"] = requestOptions.body["limit"];
+        }
         options.qs["page_info"] = pageInfo;
         Reflect.deleteProperty(options, 'body');
     }
+
     request(options, function (error, response, body) {
         if (error || body.errors) {
             console.log(error || JSON.stringify(body.errors));
@@ -132,7 +136,6 @@ function shopifyRecursiveNextRequest(requestOptions, shopifyConfig, key, pageInf
             if (body[key].length > 0) {
                 mergedResponse = mergedResponse.concat(body[key]);
             }
-
             if(response.headers.link && Object.keys(response.headers.link).length > 0){
                 let parsedHeaders = parseLinkHeader(response.headers.link);
                 if(parsedHeaders.next && parsedHeaders.next.page_info){
