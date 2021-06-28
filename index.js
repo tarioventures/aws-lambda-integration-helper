@@ -38,9 +38,10 @@ function invokeLambda(functionName, jsonPayload, region = process.env.AWS_REGION
 }
 
 function zohoInvRequest(requestOptions, zohoConfig) {
+    zohoConfig = Object.assign({},zohoConfig);
+    delete zohoConfig["authtoken"];
     // console.log("Options:", options);
     return new Promise((resolve, reject) => {
-        delete zohoConfig["authtoken"];
         invokeLambda("generateOauthToken", { scope: "inventory" }, "us-west-2").then( authToken => {
             var options =
             {
@@ -213,8 +214,10 @@ function shopifyRecursiveRequest(requestOptions, shopifyConfig, key) {
 
 
 function zohInvRecursiveRequest(requestOptions, zohoConfig, condition) {
+
+    zohoConfig = Object.assign({},zohoConfig);
+    delete zohoConfig["authtoken"];
     return new Promise((resolve,reject) => {
-        delete zohoConfig["authtoken"];
         invokeLambda("generateOauthToken", { scope: "inventory" }, "us-west-2").then( authToken => {
             var data = [];
             const recursiveRequest = (requestOptions, zohoConfig, cb) => {
