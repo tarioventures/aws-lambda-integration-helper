@@ -38,32 +38,36 @@ function invokeLambda(functionName, jsonPayload, region = process.env.AWS_REGION
 }
 
 function zohoInvRequest(requestOptions, zohoConfig) {
-    var options =
-        {
-            method: requestOptions.method,
-            url: 'https://inventory.zoho.com/api/v1' + requestOptions.url,
-            qs: zohoConfig,
-            headers:
-            {
-                'cache-control': 'no-cache',
-                'content-type': requestOptions.contentType || 'application/x-www-form-urlencoded'
-            }
-        };
-    if (requestOptions.body) {
-        options.form = requestOptions.body
-    }
     // console.log("Options:", options);
     return new Promise((resolve, reject) => {
-        request(options, (error, response, body) => {
-            if (error) {
-                // console.log("Request error", error || body);
-                reject(error || body);
-            } else {
-                body = JSON.parse(body);
-                // console.log("Response", body);
-                if (body.code != 0) reject(body);
-                else resolve(body);
+        invokeLambda("generateOauthToken", { scope: "inventory" }, "us-west-2").then( authToken => {
+            var options =
+            {
+                method: requestOptions.method,
+                url: 'https://inventory.zoho.com/api/v1' + requestOptions.url,
+                qs: zohoConfig,
+                headers:
+                {
+                    'cache-control': 'no-cache',
+                    'content-type': requestOptions.contentType || 'application/x-www-form-urlencoded',
+                    'Authorization': `Zoho-oauthtoken ${authToken}`  
+                }
+            };
+            if (requestOptions.body) {
+                options.form = requestOptions.body
             }
+
+            request(options, (error, response, body) => {
+                if (error) {
+                    // console.log("Request error", error || body);
+                    reject(error || body);
+                } else {
+                    body = JSON.parse(body);
+                    // console.log("Response", body);
+                    if (body.code != 0) reject(body);
+                    else resolve(body);
+                }
+            });
         });
     })
 }
@@ -207,47 +211,55 @@ function shopifyRecursiveRequest(requestOptions, shopifyConfig, key) {
 }
 
 
-function zohInvRecursiveRequest(requestOptions, zohoConfig, condition, cb) {
-    var data = [];
-    const recursiveRequest = (requestOptions, zohoConfig, cb) => {
-        var options =
-            {
-                method: requestOptions.method,
-                url: 'https://inventory.zoho.com/api/v1' + requestOptions.url,
-                qs: { authtoken: zohoConfig.authtoken, organizationId: zohoConfig.organizationId, page: requestOptions.page },
-                headers:
-                {
-                    'cache-control': 'no-cache',
-                    'content-type': requestOptions.contentType || 'application/x-www-form-urlencoded'
+function zohInvRecursiveRequest(requestOptions, zohoConfig, condition) {
+    return new Promise((resolve,reject) => {
+        invokeLambda("generateOauthToken", { scope: "inventory" }, "us-west-2").then( authToken => {
+            var data = [];
+            const recursiveRequest = (requestOptions, zohoConfig, cb) => {
+                var options =
+                    {
+                        method: requestOptions.method,
+                        url: 'https://inventory.zoho.com/api/v1' + requestOptions.url,
+                        qs: { authtoken: zohoConfig.authtoken, organizationId: zohoConfig.organizationId, page: requestOptions.page },
+                        headers:
+                        {
+                            'cache-control': 'no-cache',
+                            'content-type': requestOptions.contentType || 'application/x-www-form-urlencoded',
+                            'Authorization': `Zoho-oauthtoken ${authToken}`  
+                        }
+                    };
+                if (requestOptions.body) {
+                    options.form = body
                 }
-            };
-        if (requestOptions.body) {
-            options.form = body
-        }
-        request(options, function (error, response, body) {
-            if (error) {
-                console.log(error);
-                cb(null);
+                request(options, function (error, response, body) {
+                    if (error) {
+                        console.log(error);
+                        cb(null);
+                    }
+                    var body = JSON.parse(body);
+                    if (body.code != 0) {
+                        // console.log(body);
+                        cb(null);
+                        return;
+                    }
+                    // console.log("Item count", body[requestOptions.key].length, data.length);
+                    var len = body[requestOptions.key].length;
+                    // console.log("" + new Date(body[requestOptions.key][0].last_modified_time).getTime() +","+ condition.last_modified_time);
+                    if (len > 0 && new Date(body[requestOptions.key][0].last_modified_time).getTime() > condition.last_modified_time) {
+                        data = data.concat(body[requestOptions.key]);
+                        requestOptions.page += 1;
+                        recursiveRequest(requestOptions, zohoConfig, cb);
+                    } else {
+                        cb(data);
+                    }
+                });
             }
-            var body = JSON.parse(body);
-            if (body.code != 0) {
-                // console.log(body);
-                cb(null);
-                return;
-            }
-            // console.log("Item count", body[requestOptions.key].length, data.length);
-            var len = body[requestOptions.key].length;
-            // console.log("" + new Date(body[requestOptions.key][0].last_modified_time).getTime() +","+ condition.last_modified_time);
-            if (len > 0 && new Date(body[requestOptions.key][0].last_modified_time).getTime() > condition.last_modified_time) {
-                data = data.concat(body[requestOptions.key]);
-                requestOptions.page += 1;
-                recursiveRequest(requestOptions, zohoConfig, cb);
-            } else {
-                cb(data);
-            }
+            recursiveRequest(requestOptions, zohoConfig, (err,data) => {
+                if (err) reject(err);
+                else resolve(data);
+            });
         });
-    }
-    recursiveRequest(requestOptions, zohoConfig, cb);
+    });
 }
 
 const invokeStepFunction = (input, context, sfName, name) => {
