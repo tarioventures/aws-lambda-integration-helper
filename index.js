@@ -234,12 +234,12 @@ function zohInvRecursiveRequest(requestOptions, zohoConfig, condition) {
                 request(options, function (error, response, body) {
                     if (error) {
                         console.log(error);
-                        cb(null);
+                        cb(error);
                     }
                     var body = JSON.parse(body);
                     if (body.code != 0) {
                         // console.log(body);
-                        cb(null);
+                        cb(body);
                         return;
                     }
                     // console.log("Item count", body[requestOptions.key].length, data.length);
@@ -250,7 +250,7 @@ function zohInvRecursiveRequest(requestOptions, zohoConfig, condition) {
                         requestOptions.page += 1;
                         recursiveRequest(requestOptions, zohoConfig, cb);
                     } else {
-                        cb(data);
+                        cb(null,data);
                     }
                 });
             }
