@@ -138,21 +138,26 @@ function shopifyRecursiveNextRequest(requestOptions, shopifyConfig, key, pageInf
             console.log(error || JSON.stringify(body.errors));
             reject(error || JSON.stringify(body.errors));
         } else {
-
-            if (body[key].length > 0) {
-                mergedResponse = mergedResponse.concat(body[key]);
+            if(!body[key])
+            {
+                callback(null, mergedResponse);
             }
-            if(response.headers.link && Object.keys(response.headers.link).length > 0){
-                let parsedHeaders = parseLinkHeader(response.headers.link);
-                if(parsedHeaders.next && parsedHeaders.next.page_info){
-                    shopifyRecursiveNextRequest(requestOptions, shopifyConfig, key, parsedHeaders.next.page_info, mergedResponse, callback , reject);
+            else{
+                if (body[key].length > 0) {
+                    mergedResponse = mergedResponse.concat(body[key]);
+                }
+                if(response.headers.link && Object.keys(response.headers.link).length > 0){
+                    let parsedHeaders = parseLinkHeader(response.headers.link);
+                    if(parsedHeaders.next && parsedHeaders.next.page_info){
+                        shopifyRecursiveNextRequest(requestOptions, shopifyConfig, key, parsedHeaders.next.page_info, mergedResponse, callback , reject);
+                    }
+                    else {
+                        callback(null, mergedResponse);
+                    }
                 }
                 else {
                     callback(null, mergedResponse);
                 }
-            }
-            else {
-                callback(null, mergedResponse);
             }
         }
     });
